@@ -16,7 +16,7 @@ ENV JENKINS_VERSION=$IMG_TAG
 ENV GRADLE_VERSION=$GRADLE_VERSION
 ENV MAVEN_VERSION=$MAVEN_VERSION
 
-COPY adoptopenjdk.repo /etc/yum.repos.d
+COPY adoptopenjdk.repo /etc/yum.repos.d/
 RUN if [ -n "$LANG" ]; then \
       eval `echo $LANG | \
         sed -E -e 's/([a-z]+_[a-z]+)\.([a-z0-9_-]+)/localedef -cf\2 -i\1 \1.\2/i'`; \
