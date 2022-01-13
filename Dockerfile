@@ -13,7 +13,8 @@ ENV TZ=$TZ
 ENV JENKINS_VERSION=$IMG_TAG
 
 RUN apk update && \
-    apk add tzdata curl ttf-dejavu openjdk11 docker-cli docker-cli-compose docker-cli-buildx git gradle maven make && \
+    apk add tzdata curl openssh-client ttf-dejavu openjdk11 \
+      docker-cli docker-cli-compose docker-cli-buildx git gradle maven make && \
     mkdir -p /usr/local/jenkins /var/jenkins_home && \
     curl -L https://get.jenkins.io/war-stable/$JENKINS_VERSION/jenkins.war \
       -o /usr/local/jenkins/jenkins.war && \
