@@ -24,26 +24,31 @@ RUN if [ -n "$LANG" ]; then \
     if [ -n "$TZ" -a -f /usr/share/zoneinfo/$TZ ]; then \
       ln -sf /usr/share/zoneinfo/$TZ /etc/localtime; \
     fi; \
-    (cd /etc/yum.repos.d; curl -O https://download.docker.com/linux/centos/docker-ce.repo); \
-    yum -y install adoptopenjdk-11-hotspot docker-ce-cli git make openssh-clients unzip && \
-    (cd /tmp; \
-    curl -O https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
-    curl -O https://downloads.gradle-dn.com/distributions/gradle-$GRADLE_VERSION-bin.zip && \
-    cd /url/local; \
-    tar zxf /tmp/apache-maven-*-bin.tar.gz && \
-    ln -sf apache-maven-* maven && \
-    unzip /tmp/gradle-*-bin.zip && \
-    ln -sf gradle-* gradle && \
-    cd /usr/local/bin; \
+    (cd /etc/yum.repos.d; curl -O https://download.docker.com/linux/centos/docker-ce.repo) && \
+    yum -y install epel-release && \
+    yum -y install adoptopenjdk-11-hotspot docker-ce-cli git make openssh-clients unzip jq && \
+    (cd /usr/local; \
+    curl -L https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
+      -o /tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
+    tar zxf /tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
+    ln -sf apache-maven-$MAVEN_VERSION maven) && \
+    (cd /usr/local; \
+    curl -L https://downloads.gradle-dn.com/distributions/gradle-$GRADLE_VERSION-bin.zip \
+      -o /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+    unzip /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+    ln -sf gradle-$GRADLE_VERSION gradle) && \
+    (cd /usr/local/bin; \
     ln -sf ../maven/bin/mvn mvn && \
-    ln -sf ../gradle/bin/gradle gradle && \
-    rm -f /tmp/apache-maven-*-bin.tar.gz /tmp/gradle-*-bin.zip) && \
+    ln -sf ../gradle/bin/gradle gradle) && \
     mkdir -p /usr/local/jenkins /var/jenkins_home && \
     curl -L https://get.jenkins.io/war-stable/$JENKINS_VERSION/jenkins.war \
       -o /usr/local/jenkins/jenkins.war && \
     groupadd -g 1000 jenkins && \
     useradd -u 1000 -g jenkins -d /var/jenkins_home jenkins && \
-    chown -R jenkins:jenkins /var/jenkins_home
+    chown -R jenkins:jenkins /var/jenkins_home && \
+    rm -f /tmp/*.tar.gz /tmp/*.zip && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 
 COPY entrypoint.sh /entrypoint.sh
 
