@@ -4,7 +4,7 @@
 
 The MIT License
 
-See https://github.com/jenkinsci/jenkins
+See https://github.com/jenkinsci/jenkins and https://www.jenkins.io/changelog/
 
 ## Dockerfile License
 
