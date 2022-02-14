@@ -1,7 +1,8 @@
 REPO			= docker.io
 IMG_NAME		= yidigun/jenkins
 
-TAG			= 2.319.2
+TAG				= 2.319.3
+EXTRA_TAGS		= latest
 TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=172.17.0.1:2375
 
 IMG_TAG			= $(TAG)
@@ -40,11 +41,14 @@ $(TAG): $(BUILDER)
 	if [ "$(PUSH)" = "yes" ]; then \
 	  PUSH="--push"; \
 	fi; \
+	TAGS="-t $(REPO)/$(IMG_NAME):$(TAG)"; \
+	for t in $(EXTRA_TAGS); do \
+	  TAGS="$$TAGS -t $(REPO)/$(IMG_NAME):$$t"; \
+	done; \
 	CMD="docker buildx build \
 	    --builder $(BUILDER) --platform "$(PLATFORM)" \
 	    --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) \
-	    $$BUILD_ARGS $$PUSH \
-	    -t $(REPO)/$(IMG_NAME):latest -t $(REPO)/$(IMG_NAME):$(IMG_TAG) \
+	    $$BUILD_ARGS $$PUSH $$TAGS \
 	    ."; \
 	echo $$CMD; \
 	eval $$CMD

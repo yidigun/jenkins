@@ -43,13 +43,13 @@ and proceed web configuration via http://localhost:8080
 Check downloaded version and modify TAG macro.
 
 ```shell
-make TAG=2.319.2
+make TAG=2.319.3
 ```
 
 If you don't want push and just build image.
 
 ```shell
-make TAG=2.319.2 PUSH=no
+make TAG=2.319.3 PUSH=no
 ```
 
 ### 3. Test image
@@ -58,5 +58,5 @@ Local build and test image. Specify /var/jenkins_home volume and web port using 
 
 ```shell
 mkdir jenkins_home
-make test TAG=2.319.2 TEST_ARGS="-v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=dind:2375 --network=dind"
+make test TAG=2.319.3 TEST_ARGS="-v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=dind:2375 --network=dind"
 ```
