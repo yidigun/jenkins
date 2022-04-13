@@ -1,7 +1,7 @@
 REPO			= docker.io
 IMG_NAME		= yidigun/jenkins
 
-TAG				= 2.319.3
+TAG				= 2.332.2
 EXTRA_TAGS		= latest
 TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=172.17.0.1:2375
 
