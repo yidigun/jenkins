@@ -1,9 +1,9 @@
 REPO			= docker.io
 IMG_NAME		= yidigun/jenkins
 
-TAG				= 2.332.2
+TAG				= 2.332.3
 EXTRA_TAGS		= latest
-TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=172.17.0.1:2375
+TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=ssh://user@172.17.0.1
 
 IMG_TAG			= $(TAG)
 PUSH			= yes

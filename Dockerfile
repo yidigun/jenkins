@@ -1,62 +1,61 @@
-FROM docker.io/library/centos:7
+FROM docker.io/yidigun/ubuntu-base:22.04
 
 ARG IMG_NAME
 ARG IMG_TAG
-ARG LANG=ko_KR.UTF-8
-ARG TZ=Asia/Seoul
-ARG GRADLE_VERSION=7.4.2
-ARG MAVEN_VERSION=3.8.5
+ARG LANG=en_US.UTF-8
+ARG TZ=Etc/UTC
 
 ENV IMG_NAME=$IMG_NAME
 ENV IMG_TAG=$IMG_TAG
 ENV LANG=$LANG
 ENV TZ=$TZ
+ENV GRADLE_VERSION=7.4.2
+ENV MAVEN_VERSION=3.8.6
+ENV SERVER_PORT=8080
 
 ENV JENKINS_VERSION=$IMG_TAG
-ENV GRADLE_VERSION=$GRADLE_VERSION
-ENV MAVEN_VERSION=$MAVEN_VERSION
 
-COPY adoptopenjdk.repo /etc/yum.repos.d/
-RUN if [ -n "$LANG" ]; then \
-      eval `echo $LANG | \
-        sed -E -e 's/([a-z]+_[a-z]+)\.([a-z0-9_-]+)/localedef -cf\2 -i\1 \1.\2/i'`; \
-    fi; \
-    if [ -n "$TZ" -a -f /usr/share/zoneinfo/$TZ ]; then \
-      ln -sf /usr/share/zoneinfo/$TZ /etc/localtime; \
-    fi; \
-    (cd /etc/yum.repos.d; curl -O https://download.docker.com/linux/centos/docker-ce.repo) && \
-    yum -y install epel-release && \
-    yum -y install adoptopenjdk-11-hotspot docker-ce-cli git make openssh-clients unzip jq && \
-    (cd /usr/local; \
-    curl -L https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz \
-      -o /tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
-    tar zxf /tmp/apache-maven-$MAVEN_VERSION-bin.tar.gz && \
-    ln -sf apache-maven-$MAVEN_VERSION maven) && \
-    (cd /usr/local; \
-    curl -L https://downloads.gradle-dn.com/distributions/gradle-$GRADLE_VERSION-bin.zip \
-      -o /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-    unzip /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-    ln -sf gradle-$GRADLE_VERSION gradle) && \
-    (cd /usr/local/bin; \
-    ln -sf ../maven/bin/mvn mvn && \
-    ln -sf ../gradle/bin/gradle gradle) && \
-    mkdir -p /usr/local/jenkins /var/jenkins_home && \
-    curl -L https://get.jenkins.io/war-stable/$JENKINS_VERSION/jenkins.war \
-      -o /usr/local/jenkins/jenkins.war && \
+RUN apt-get update && \
+    apt-get -y install curl ca-certificates gnupg lsb-release jq unzip sudo \
+      git make openssh-client openjdk-11-jdk-headless ant && \
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key \
+      >/usr/share/keyrings/jenkins-keyring.asc && \
+    echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
+      >/etc/apt/sources.list.d/jenkins.list && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+      gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+      >/etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get -y install jenkins=$JENKINS_VERSION docker-ce-cli
+
+RUN mkdir -p /var/jenkins_home && \
+    (groupdel jenkins 2>/dev/null; \
+    userdel jenkins 2>/dev/null; \
+    rmdir /var/lib/jenkins 2>/dev/null; \
     groupadd -g 1000 jenkins && \
-    useradd -u 1000 -g jenkins -d /var/jenkins_home jenkins && \
-    chown -R jenkins:jenkins /var/jenkins_home && \
-    rm -f /tmp/*.tar.gz /tmp/*.zip && \
-    yum clean all && \
-    rm -rf /var/cache/yum
+    useradd -u 1000 -g jenkins -d /var/jenkins_home jenkins) && \
+    chown -R jenkins:jenkins /var/jenkins_home
 
-COPY entrypoint.sh /entrypoint.sh
+RUN (cd /opt; \
+    curl https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | \
+      tar zxf - && \
+    ln -sf apache-maven-$MAVEN_VERSION maven) && \
+    (cd /opt; \
+    curl -L https://downloads.gradle-dn.com/distributions/gradle-$GRADLE_VERSION-bin.zip \
+         -o /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+    unzip /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+    ln -sf gradle-$GRADLE_VERSION gradle && \
+    rm -f /tmp/gradle-$GRADLE_VERSION-bin.zip) && \
+    (cd /usr/local/bin; \
+    ln -sf /opt/maven/bin/mvn mvn && \
+    ln -sf /opt/gradle/bin/gradle gradle)
+
+COPY entrypoint.sh initial-config.sh /
 
 WORKDIR /var/jenkins_home
 
-USER jenkins:jenkins
-
-EXPOSE 8080/tcp
+EXPOSE ${SERVER_PORT}/tcp
 VOLUME /var/jenkins_home
 
 ENTRYPOINT [ "/entrypoint.sh" ]
