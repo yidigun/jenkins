@@ -1,5 +1,5 @@
 #!/bin/sh
-SU="sudo -E -u jenkins -- "
+SU="sudo -E -H -u jenkins -- "
 
 # try to set locale and timezone
 if locale -a 2>/dev/null | grep -q "$LANG"; then
