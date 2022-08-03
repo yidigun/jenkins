@@ -1,7 +1,9 @@
 REPO			= docker.io
 IMG_NAME		= yidigun/jenkins
 
-TAG				= 2.346.1
+TAG				= 2.346.2
+GRADLE_VERSION  = 7.5
+MAVEN_VERSION   = 3.8.6
 EXTRA_TAGS		= latest
 TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=ssh://user@172.17.0.1
 
@@ -25,8 +27,9 @@ test:
 	  BUILD_ARGS="$$BUILD_ARGS --build-arg \"$$a\""; \
 	done; \
 	docker build --progress=plain \
-	  --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) $$BUILD_ARGS \
-	  -t $(REPO)/$(IMG_NAME):test . && \
+	  --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) \
+	  --build-arg GRADLE_VERSION=$(GRADLE_VERSION) --build-arg MAVEN_VERSION=$(MAVEN_VERSION) \
+	   $$BUILD_ARGS -t $(REPO)/$(IMG_NAME):test . && \
 	docker run -d --rm --name=`basename $(IMG_NAME)` \
 	  $(TEST_ARGS) \
 	  $(REPO)/$(IMG_NAME):test \
@@ -48,6 +51,7 @@ $(TAG): $(BUILDER)
 	CMD="docker buildx build \
 	    --builder $(BUILDER) --platform "$(PLATFORM)" \
 	    --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) \
+	    --build-arg GRADLE_VERSION=$(GRADLE_VERSION) --build-arg MAVEN_VERSION=$(MAVEN_VERSION) \
 	    $$BUILD_ARGS $$PUSH $$TAGS \
 	    ."; \
 	echo $$CMD; \
