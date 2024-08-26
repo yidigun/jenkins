@@ -1,8 +1,11 @@
 REPO			= docker.io
 IMG_NAME		= yidigun/jenkins
 
-TAG			= 2.319.2
-TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=172.17.0.1:2375
+TAG				= 2.346.2
+GRADLE_VERSION  = 7.5
+MAVEN_VERSION   = 3.8.6
+EXTRA_TAGS		= latest
+TEST_ARGS		= -v `pwd`/jenkins_home:/var/jenkins_home -p 8080:8080/tcp -e DOCKER_HOST=ssh://user@172.17.0.1
 
 IMG_TAG			= $(TAG)
 PUSH			= yes
@@ -24,8 +27,9 @@ test:
 	  BUILD_ARGS="$$BUILD_ARGS --build-arg \"$$a\""; \
 	done; \
 	docker build --progress=plain \
-	  --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) $$BUILD_ARGS \
-	  -t $(REPO)/$(IMG_NAME):test . && \
+	  --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) \
+	  --build-arg GRADLE_VERSION=$(GRADLE_VERSION) --build-arg MAVEN_VERSION=$(MAVEN_VERSION) \
+	   $$BUILD_ARGS -t $(REPO)/$(IMG_NAME):test . && \
 	docker run -d --rm --name=`basename $(IMG_NAME)` \
 	  $(TEST_ARGS) \
 	  $(REPO)/$(IMG_NAME):test \
@@ -40,11 +44,15 @@ $(TAG): $(BUILDER)
 	if [ "$(PUSH)" = "yes" ]; then \
 	  PUSH="--push"; \
 	fi; \
+	TAGS="-t $(REPO)/$(IMG_NAME):$(TAG)"; \
+	for t in $(EXTRA_TAGS); do \
+	  TAGS="$$TAGS -t $(REPO)/$(IMG_NAME):$$t"; \
+	done; \
 	CMD="docker buildx build \
 	    --builder $(BUILDER) --platform "$(PLATFORM)" \
 	    --build-arg IMG_NAME=$(IMG_NAME) --build-arg IMG_TAG=$(IMG_TAG) \
-	    $$BUILD_ARGS $$PUSH \
-	    -t $(REPO)/$(IMG_NAME):latest -t $(REPO)/$(IMG_NAME):$(IMG_TAG) \
+	    --build-arg GRADLE_VERSION=$(GRADLE_VERSION) --build-arg MAVEN_VERSION=$(MAVEN_VERSION) \
+	    $$BUILD_ARGS $$PUSH $$TAGS \
 	    ."; \
 	echo $$CMD; \
 	eval $$CMD
