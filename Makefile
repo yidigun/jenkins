@@ -54,8 +54,8 @@ $(BUILDER):
 	  : do nothing; \
 	else \
 	  CMD="docker buildx create --name $(BUILDER) \
-	    --driver docker-container"; \
-	    --platform \"$(PLATFORM)\" \
+	    --driver docker-container \
+	    --platform \"$(PLATFORM)\""; \
 	  echo $$CMD; \
 	  eval $$CMD; \
 	fi
